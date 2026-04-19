@@ -1,0 +1,19 @@
+{
+  "project": "영어 단어 시험 자동 생성 및 채점 웹 서비스",
+  "task": "mvp",
+  "prompt": "plan-and-build skill 사용해서 이 서비스의 mvp를 전부 구현하자",
+  "totalPhases": 10,
+  "created_at": "2026-04-17T20:45:00+0900",
+  "phases": [
+    { "phase": 0, "name": "project-init", "status": "completed" },
+    { "phase": 1, "name": "generate-logic", "status": "completed" },
+    { "phase": 2, "name": "generate-api", "status": "completed" },
+    { "phase": 3, "name": "home-ui", "status": "completed" },
+    { "phase": 4, "name": "preview-page", "status": "completed" },
+    { "phase": 5, "name": "pdf-generation", "status": "completed" },
+    { "phase": 6, "name": "grade-ui", "status": "completed" },
+    { "phase": 7, "name": "grade-logic", "status": "completed" },
+    { "phase": 8, "name": "results-page", "status": "completed" },
+    { "phase": 9, "name": "deploy", "status": "pending" }
+  ]
+}

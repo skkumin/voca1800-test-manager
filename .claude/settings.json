@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 scripts/run-phases.py 1-mvp)",
+      "Bash(npx create-next-app@latest word-test-app --typescript --tailwind --app --eslint --no-git)",
+      "Bash(rm -rf word-test-app)",
+      "Bash(npm cache *)",
+      "Bash(npx -y create-next-app@latest word-test-app --typescript --tailwind --app --eslint --no-git --no-git)",
+      "Bash(rm -rf \"c:/Users/mingue/Desktop/단어 자동 출제&채점/word-test-app\")",
+      "Bash(mkdir -p \"c:/Users/mingue/Desktop/단어 자동 출제&채점/word-test-app\")",
+      "Bash(npm init *)",
+      "Bash(npm install *)",
+      "Bash(npm --version)",
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:3000)",
+      "Read(//c/Users/mingue/dev/단어 자동 출제&채점/**)",
+      "Bash(node_modules/.bin/tsx scripts/seed.ts)"
+    ]
+  },
+  "skillOverrides": {
+    "plan-and-build": "on"
+  }
+}

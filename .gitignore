@@ -1,0 +1,14 @@
+# dependencies
+word-test-app/node_modules/
+
+# Next.js build
+word-test-app/.next/
+
+# env files
+word-test-app/.env.local
+word-test-app/.env*.local
+
+# misc
+.DS_Store
+*.pem
+Thumbs.db
