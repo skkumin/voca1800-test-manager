@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(taskkill /PID 59652 /F)",
+      "Bash(netstat -ano)",
+      "Bash(start \"http://localhost:3004\")",
+      "Bash(python main.py --input \"PDF/2027학년 VOCA 1800.pdf\" --dry-run)",
+      "Bash(pip install *)",
+      "Bash(PYTHONPATH=. python main.py --input \"PDF/2027학년 VOCA 1800.pdf\" --dry-run)",
+      "Bash(mv parser *)",
+      "Bash(sed -i 's/from parser/from upstage_parser/g' main.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python main.py --input \"PDF/2027학년 VOCA 1800.pdf\" --dry-run)",
+      "Bash(PYTHONIOENCODING=utf-8 python main.py --input \"PDF/2027학년 VOCA 1800.pdf\")",
+      "Bash(python)",
+      "Bash(python3)",
+      "Bash(python3 extract_words.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python3 extract_words.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python3 main.py --input \"PDF/2027학년 VOCA 1800.pdf\" --dry-run)",
+      "Bash(xargs ls *)",
+      "WebFetch(domain:github.com)",
+      "Bash(PYTHONIOENCODING=utf-8 python)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\mingue\\dev\\단어 자동 출제&채점\\word-test-app\\app"
+    ]
+  }
+}
