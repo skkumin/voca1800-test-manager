@@ -28,12 +28,14 @@ export async function POST(req: NextRequest) {
 
     let score = 0;
     const wrongWords: string[] = [];
+    const sentenceIds: number[] = [];
 
-    (test.questions as { answer: number; word: string }[]).forEach((q, idx) => {
+    (test.questions as { answer: number; word: string; sentenceIndex: number }[]).forEach((q, idx) => {
       if (answers[idx] === q.answer) {
         score++;
       } else {
         wrongWords.push(q.word);
+        sentenceIds.push(q.sentenceIndex);
       }
     });
 
@@ -45,6 +47,7 @@ export async function POST(req: NextRequest) {
         answers,
         score,
         wrong_words: wrongWords,
+        sentence_ids: sentenceIds,
       });
 
     if (insertError) throw insertError;

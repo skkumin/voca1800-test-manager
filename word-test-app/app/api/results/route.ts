@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const [{ data: results, error: resultsError }, { data: students, error: studentsError }] = await Promise.all([
       supabase.from('test_results').select('*').order('created_at', { ascending: false }),
-      supabase.from('students').select('student_id, name, class'),
+      supabase.from('students').select('student_id, name, school'),
     ]);
 
     if (resultsError) throw resultsError;
@@ -18,7 +18,7 @@ export async function GET() {
       return {
         ...row,
         student_name: student?.name ?? row.student_id,
-        student_class: student?.class ?? '-',
+        student_school: student?.school ?? '-',
       };
     });
 

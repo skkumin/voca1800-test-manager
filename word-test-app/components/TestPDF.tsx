@@ -3,6 +3,7 @@ import { Question } from '@/lib/types';
 
 interface Props {
   questions: Question[];
+  showAnswer?: boolean;
 }
 
 Font.register({
@@ -76,9 +77,17 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     lineHeight: 1.4,
   },
+  answerChoice: {
+    width: '50%',
+    fontSize: 10,
+    color: '#16a34a',
+    fontWeight: 'bold',
+    paddingVertical: 3,
+    lineHeight: 1.4,
+  },
 });
 
-export default function TestPDF({ questions }: Props) {
+export default function TestPDF({ questions, showAnswer = false }: Props) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -102,11 +111,14 @@ export default function TestPDF({ questions }: Props) {
               {idx + 1}번.  {q.question}
             </Text>
             <View style={styles.choicesGrid}>
-              {q.choices.map((choice, cidx) => (
-                <Text key={cidx} style={styles.choice}>
-                  {cidx + 1}. {choice}
-                </Text>
-              ))}
+              {q.choices.map((choice, cidx) => {
+                const isAnswer = showAnswer && cidx === q.answer;
+                return (
+                  <Text key={cidx} style={isAnswer ? styles.answerChoice : styles.choice}>
+                    {isAnswer ? '✓ ' : ''}{cidx + 1}. {choice}
+                  </Text>
+                );
+              })}
             </View>
           </View>
         ))}

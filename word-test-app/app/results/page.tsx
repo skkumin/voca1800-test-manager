@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Users } from 'lucide-react';
 import StudentCard from '@/components/StudentCard';
 import AnalysisPanel from '@/components/AnalysisPanel';
 
@@ -98,7 +99,11 @@ export default function ResultsPage() {
         </div>
 
         {students.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-12 text-center text-gray-400">채점 기록이 없습니다</div>
+          <div className="bg-white rounded-lg shadow p-16 text-center">
+            <Users size={48} className="mx-auto mb-4 text-gray-200" />
+            <p className="text-gray-400 font-medium">아직 채점 기록이 없습니다</p>
+            <p className="text-sm text-gray-300 mt-1">채점 탭에서 시험을 채점해보세요</p>
+          </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
             {filtered.map(s => (

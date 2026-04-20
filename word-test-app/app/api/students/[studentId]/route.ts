@@ -11,7 +11,7 @@ export async function GET(
     const [{ data: results, error: rErr }, { data: words, error: wErr }] = await Promise.all([
       supabase
         .from('test_results')
-        .select('score, answers, wrong_words, created_at, test_id')
+        .select('score, answers, wrong_words, sentence_ids, created_at, test_id')
         .eq('student_id', studentId)
         .order('created_at', { ascending: true }),
       supabase.from('words').select('word, sentences'),
@@ -31,24 +31,53 @@ export async function GET(
       total: (r.answers as number[]).length,
     }));
 
-    const freqMap = new Map<string, number>();
+    const wrongWordsMap = new Map<string, { count: number; sentenceIndices: Set<number> }>();
     for (const r of results || []) {
-      for (const w of r.wrong_words as string[]) {
-        freqMap.set(w, (freqMap.get(w) || 0) + 1);
+      const wrongWordsArr = r.wrong_words as string[];
+      const sentenceIdsArr = r.sentence_ids as number[];
+      for (let i = 0; i < wrongWordsArr.length; i++) {
+        const word = wrongWordsArr[i];
+        const sentenceIdx = sentenceIdsArr?.[i];
+        const current = wrongWordsMap.get(word) || { count: 0, sentenceIndices: new Set<number>() };
+        current.count += 1;
+        if (sentenceIdx !== undefined && sentenceIdx !== null) {
+          current.sentenceIndices.add(sentenceIdx);
+        }
+        wrongWordsMap.set(word, current);
       }
     }
 
-    const wrongWords = Array.from(freqMap.entries())
-      .sort((a, b) => b[1] - a[1])
-      .map(([word, count]) => ({
+    const wrongWords = Array.from(wrongWordsMap.entries())
+      .sort((a, b) => b[1].count - a[1].count)
+      .map(([word, { count, sentenceIndices }]) => ({
         word,
         count,
-        sentences: wordSentenceMap.get(word) || [],
+        sentences: (wordSentenceMap.get(word) || []).filter((_, idx) => sentenceIndices.size === 0 || sentenceIndices.has(idx)),
       }));
 
     return NextResponse.json({ scoreHistory, wrongWords });
   } catch (error) {
     console.error('Error fetching student analysis:', error);
     return NextResponse.json({ error: 'Failed to fetch analysis' }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ studentId: string }> }
+) {
+  try {
+    const { studentId } = await params;
+
+    const { error } = await supabase
+      .from('students')
+      .delete()
+      .eq('student_id', studentId);
+
+    if (error) throw error;
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting student:', error);
+    return NextResponse.json({ error: 'Failed to delete student' }, { status: 500 });
   }
 }

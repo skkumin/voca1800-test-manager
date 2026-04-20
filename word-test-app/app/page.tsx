@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { Plus, Loader2 } from 'lucide-react';
 
 export default function Home() {
   const router = useRouter();
   const [mode, setMode] = useState<'day_select' | 'unasked'>('day_select');
   const [days, setDays] = useState<string[]>([]);
+  const [daySearch, setDaySearch] = useState('');
+  const [dayDropdownOpen, setDayDropdownOpen] = useState(false);
   const [count, setCount] = useState(10);
   const [loading, setLoading] = useState(false);
   const [allDays, setAllDays] = useState<string[]>([]);
@@ -105,19 +108,51 @@ export default function Home() {
 
         {mode === 'day_select' && (
           <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">DAY 선택</label>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {allDays.map(day => (
-                <label key={day} className="flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={days.includes(day)}
-                    onChange={() => handleDayToggle(day)}
-                    className="w-4 h-4"
-                  />
-                  <span className="ml-2 text-gray-700">{day}</span>
-                </label>
-              ))}
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-semibold text-gray-700">DAY 선택</label>
+              <div className="flex gap-2">
+                <button onClick={() => setDays(allDays)} className="text-xs text-indigo-600 hover:underline">전체 선택</button>
+                <span className="text-gray-300">|</span>
+                <button onClick={() => setDays([])} className="text-xs text-gray-400 hover:underline">전체 해제</button>
+              </div>
+            </div>
+
+            {days.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {days.sort().map(day => (
+                  <span key={day} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#eef2ff', color: '#4f46e5', fontSize: '12px', fontWeight: '600', padding: '2px 8px', borderRadius: '999px' }}>
+                    {day}
+                    <button onClick={() => handleDayToggle(day)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#818cf8', fontSize: '14px', lineHeight: 1, padding: 0 }}>×</button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                placeholder="DAY 검색..."
+                value={daySearch}
+                onChange={e => setDaySearch(e.target.value)}
+                onFocus={() => setDayDropdownOpen(true)}
+                onBlur={() => setTimeout(() => setDayDropdownOpen(false), 150)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              {dayDropdownOpen && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', zIndex: 10, padding: '8px', maxHeight: '200px', overflowY: 'auto' }}>
+                  <div className="grid grid-cols-4 gap-1">
+                    {allDays.filter(d => d.toLowerCase().includes(daySearch.toLowerCase())).map(day => (
+                      <button
+                        key={day}
+                        onMouseDown={e => { e.preventDefault(); handleDayToggle(day); }}
+                        className={`py-1 px-2 rounded text-xs font-medium transition ${days.includes(day) ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                      >
+                        {day}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -151,7 +186,7 @@ export default function Home() {
           disabled={loading || (mode === 'unasked' && unaskedCount === 0)}
           className="w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
-          {loading ? '생성 중...' : '시험 생성'}
+          {loading ? <><Loader2 size={15} className="inline mr-1 animate-spin" />생성 중...</> : <><Plus size={15} className="inline mr-1" />시험 생성</>}
         </button>
       </div>
     </div>

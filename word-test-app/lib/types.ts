@@ -36,5 +36,5 @@ export interface Student {
   id: string;
   student_id: string;
   name: string;
-  class: string;
+  school: string;
 }

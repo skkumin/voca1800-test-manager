@@ -17,6 +17,7 @@
   - 드롭다운 표시 형식: `T1776... (2026. 4. 19. · DAY1, DAY2)`
 - **학생 선택**: `<input list="student-list">` + `<datalist>` 콤보박스
   - 이름 타이핑 시 자동완성 드롭다운 표시
+  - 드롭다운 형식: `{name} ({school})`
   - `students.find(s => s.name === value)`로 `student_id` 매핑
   - 목록에 없는 이름 입력 후 포커스 아웃 시 에러 메시지 표시
 - `selectedStudentId && testId` 조건 충족 시 `<GradeForm>` 렌더링
@@ -40,6 +41,14 @@
 - `String.fromCharCode(9312 + cidx)` 로 원 숫자 생성
 
 **제출 버튼**: `제출 (N/전체)` 형식으로 진행 상황 표시, `/api/grade` POST 호출
+
+### `app/api/grade/route.ts` (채점 API)
+
+- 기존: `testId, studentId, answers` 처리
+- **추가**: `sentence_ids` 배열 계산 및 저장
+  - 틀린 문제마다 해당 `question.sentenceIndex` 기록
+  - `test_results`의 `sentence_ids` 컬럼에 배열로 저장
+  - 예: 1번, 3번, 5번 틀림 → `sentence_ids: [0, 2, 4]`
 
 ---
 

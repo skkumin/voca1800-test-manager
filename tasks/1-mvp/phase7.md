@@ -45,12 +45,14 @@ export async function POST(req: NextRequest) {
     // 정답과 비교
     let score = 0;
     const wrongWords: string[] = [];
+    const sentenceIds: number[] = [];
 
     (test.questions as any[]).forEach((q, idx) => {
       if (answers[idx] === q.answer) {
         score++;
       } else {
         wrongWords.push(q.word);
+        sentenceIds.push(q.sentenceIndex);  // 틀린 문제의 문장 인덱스 기록
       }
     });
 
@@ -62,7 +64,8 @@ export async function POST(req: NextRequest) {
         test_id: testId,
         answers,
         score,
-        wrong_words: wrongWords
+        wrong_words: wrongWords,
+        sentence_ids: sentenceIds  // 새로 추가: 틀린 예문 추적용
       });
 
     if (insertError) throw insertError;
@@ -120,3 +123,6 @@ curl -X POST http://localhost:3000/api/grade \
 
 - 정답 인덱스 비교는 0-based여야 함
 - 틀린 단어는 word 필드에서 추출
+- `sentence_ids`: 틀린 문제의 `sentenceIndex` 배열로 기록
+  - 학생 분석 패널에서 정확한 틀린 예문만 표시하기 위해 필요
+  - `wrongWords[i]`와 `sentenceIds[i]`는 같은 문제에서 나온 값

@@ -97,7 +97,7 @@ export default function GradePage() {
           />
           <datalist id="student-list">
             {students.map(s => (
-              <option key={s.student_id} value={s.name}>{s.name} ({s.class})</option>
+              <option key={s.student_id} value={s.name}>{s.name} ({s.school})</option>
             ))}
           </datalist>
           {studentError && (

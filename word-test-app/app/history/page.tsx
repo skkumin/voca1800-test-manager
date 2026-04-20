@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 
 interface HistoryRow {
   testId: string;
@@ -67,12 +66,19 @@ export default function HistoryPage() {
                       {row.questionCount}
                     </td>
                     <td className="border border-gray-200 px-4 py-3">
-                      <Link
+                      <a
                         href={`/test/${row.testId}?answer=true`}
-                        className="text-blue-600 hover:underline text-sm"
+                        style={{
+                          display: 'inline-flex', alignItems: 'center',
+                          padding: '5px 12px', borderRadius: '6px',
+                          background: '#6366f1', color: '#fff',
+                          fontSize: '13px', fontWeight: '600',
+                          textDecoration: 'none',
+                          cursor: 'pointer',
+                        }}
                       >
                         시험지 보기
-                      </Link>
+                      </a>
                     </td>
                   </tr>
                 ))}

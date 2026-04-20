@@ -39,7 +39,7 @@ export default function TestPage() {
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-gray-800">
-            시험 미리보기 ({test.days.join(', ') || '미출제 예문'})
+            시험지 ({test.days.join(', ') || '미출제 예문'})
           </h1>
           {showAnswer && (
             <span className="text-sm bg-green-100 text-green-700 px-3 py-1 rounded-full font-semibold">정답 표시 중</span>

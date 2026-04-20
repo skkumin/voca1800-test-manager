@@ -2,7 +2,22 @@
 
 ## DB 스키마 마이그레이션
 
-### `students.class` → `students.school` 컬럼 이름 변경
+### 1️⃣ `test_results.sentence_ids` 컬럼 추가 (완료)
+
+실제 틀린 예문만 필터링하기 위해 추가됨. 이미 적용됨:
+
+```sql
+ALTER TABLE test_results 
+ADD COLUMN sentence_ids BIGINT[] DEFAULT '{}';
+```
+
+**효과**: 
+- 채점 시 틀린 문제의 `sentenceIndex` 기록
+- 학생 분석 패널에서 정확한 틀린 예문만 표시
+
+---
+
+### 2️⃣ `students.class` → `students.school` 컬럼 이름 변경 (완료)
 
 현재 `students` 테이블의 `class` 컬럼은 실제로 학교명을 저장하고 있음.
 MVP에서는 화면 라벨만 "학교"로 표시하고 컬럼명은 그대로 유지.
