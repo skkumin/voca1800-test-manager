@@ -16,7 +16,6 @@
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "isolatedDeclarations": true,
     "noEmit": true,
     "jsx": "react-jsx",
     /* Linting */
@@ -30,13 +29,13 @@
         "./*"
       ]
     },
-    "allowJs": true,
     "incremental": true,
     "plugins": [
       {
         "name": "next"
       }
-    ]
+    ],
+    "allowJs": true
   },
   "include": [
     "next-env.d.ts",

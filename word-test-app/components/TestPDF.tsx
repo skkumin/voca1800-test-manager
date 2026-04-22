@@ -9,7 +9,6 @@ interface Props {
 Font.register({
   family: 'Noto Sans KR',
   src: `${typeof window !== 'undefined' ? window.location.origin : ''}/fonts/NotoSansKR-Regular.woff`,
-  format: 'woff',
 });
 
 const styles = StyleSheet.create({

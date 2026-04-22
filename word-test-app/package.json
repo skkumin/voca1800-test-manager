@@ -4,7 +4,7 @@
   "description": "영어 단어 시험 자동 생성 및 채점 웹 서비스",
   "scripts": {
     "dev": "node node_modules/next/dist/bin/next dev",
-    "build": "node node_modules/next/dist/bin/next build",
+    "build": "node --max_old_space_size=4096 node_modules/next/dist/bin/next build",
     "start": "node node_modules/next/dist/bin/next start",
     "test": "vitest run",
     "seed": "node --env-file=.env.local node_modules/tsx/dist/cli.mjs scripts/seed.ts"

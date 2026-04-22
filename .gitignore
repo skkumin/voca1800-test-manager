@@ -12,3 +12,5 @@ word-test-app/.env*.local
 .DS_Store
 *.pem
 Thumbs.db
+
+.vercel

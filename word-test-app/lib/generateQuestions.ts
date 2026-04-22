@@ -104,7 +104,12 @@ export async function selectWrongAnswers(
     candidates = diffCategory;
   } else {
     const needed = count - diffCategory.length;
-    candidates = [...diffCategory, ...sameCategory.slice(0, needed)];
+    const shuffledSameCategory = [...sameCategory];
+    for (let i = shuffledSameCategory.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledSameCategory[i], shuffledSameCategory[j]] = [shuffledSameCategory[j], shuffledSameCategory[i]];
+    }
+    candidates = [...diffCategory, ...shuffledSameCategory.slice(0, needed)];
   }
 
   // 충분한 후보가 없으면 전체 풀 사용
@@ -112,8 +117,12 @@ export async function selectWrongAnswers(
     candidates = pool;
   }
 
-  // 랜덤 선택 후 표면형 변환
-  const shuffled = [...candidates].sort(() => Math.random() - 0.5);
+  // Fisher-Yates shuffle으로 고르게 섞기
+  const shuffled = [...candidates];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
   const selected = shuffled.slice(0, count);
 
   return selected.map(w => {
