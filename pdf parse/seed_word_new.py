@@ -22,47 +22,45 @@ HEADERS = {
     "Prefer": "return=minimal",
 }
 
-word_new_path = Path(__file__).parent.parent / "word_new.json"
+word_new_path = Path(__file__).parent.parent / "words_normalized.json"
 with open(word_new_path, encoding="utf-8") as f:
     data = json.load(f)
 
 
+QUALITY_MAP = {
+    "high": "High",
+    "low_too_short": "Low (Too Short)",
+    "error": "Error: Word not found",
+}
+
 def normalize_questions(entry):
-    """두 구조를 통일하고 is_testable=false 예문은 제외한다."""
+    """words_normalized.json의 예문 구조를 DB 저장 형식으로 변환."""
     questions = []
-    for q in entry.get("questions", []):
-        if "is_testable" in q and not q["is_testable"]:
+    for ex in entry.get("examples", []):
+        if not ex.get("testable", True):
             continue
-
-        if "blank_info" in q and q["blank_info"] is not None:
-            blank_word = q["blank_info"].get("word_in_text", "")
-            indices = q["blank_info"].get("indices") or {}
-            start = indices.get("start", 0)
-            end   = indices.get("end", 0)
-        else:
-            blank_word = q.get("blank_word", "")
-            coords = q.get("coordinates") or {}
-            start = coords.get("start", 0)
-            end   = coords.get("end", 0)
-
+        blank = ex.get("blank", {})
         questions.append({
-            "original":    q["original"],
-            "blank_word":  blank_word,
-            "start":       start,
-            "end":         end,
-            "suitability": q.get("suitability", ""),
+            "original":    ex["sentence"],
+            "blank_word":  blank.get("surface", ""),
+            "inflection":  blank.get("inflection", ""),
+            "start":       blank.get("start", 0),
+            "end":         blank.get("end", 0),
+            "suitability": QUALITY_MAP.get(ex.get("quality", ""), ""),
         })
     return questions
 
 
 rows = []
 for entry in data:
-    word = entry.get("target_word") or entry.get("word", "")
     rows.append({
-        "word":      word,
-        "day":       entry["day"],
-        "meaning":   None,
-        "questions": normalize_questions(entry),
+        "word":              entry["lemma"],
+        "day":               f"DAY {entry['day']:02d}",
+        "meaning":           entry.get("meaning_ko") or None,
+        "questions":         normalize_questions(entry),
+        "pos":               entry.get("pos"),
+        "inflections":       entry.get("inflections"),
+        "semantic_category": entry.get("semantic_category"),
     })
 
 print(f"총 {len(rows)}개 단어 준비")
@@ -73,17 +71,19 @@ print()
 
 BATCH = 50
 success = 0
+HEADERS_UPSERT = {**HEADERS, "Prefer": "resolution=merge-duplicates"}
+
 for i in range(0, len(rows), BATCH):
     batch = rows[i:i + BATCH]
     res = requests.post(
         f"{SUPABASE_URL}/rest/v1/words",
-        headers=HEADERS,
+        headers=HEADERS_UPSERT,
         json=batch,
     )
     if res.status_code not in (200, 201):
         print(f"오류 발생 (batch {i}~{i+len(batch)}): {res.status_code} {res.text}")
         sys.exit(1)
     success += len(batch)
-    print(f"  삽입 완료: {success}/{len(rows)}")
+    print(f"  완료: {success}/{len(rows)}")
 
 print(f"\n완료! words 테이블에 {success}개 삽입.")

@@ -48,17 +48,26 @@ export function blankWord(q: WordQuestion): string {
   return q.original.slice(0, q.start) + '_____' + q.original.slice(q.end);
 }
 
+function matchCase(target: string, reference: string): string {
+  if (!reference || reference.length === 0) return target;
+  if (reference[0] === reference[0].toUpperCase()) {
+    return target[0].toUpperCase() + target.slice(1);
+  }
+  return target.toLowerCase();
+}
+
 /**
- * 전체 단어 중 정답 단어를 제외하고 랜덤으로 N개 오답을 선택한다
+ * POS + inflection + semantic_category 3중 필터로 오답 선택
  */
 export async function selectWrongAnswers(
   correctWord: Word,
+  correctQuestion: WordQuestion,
   _selectedDays: string[],
   count: number = 4
-): Promise<Word[]> {
+): Promise<string[]> {
   const { data: allWords, error } = await supabase
     .from('words')
-    .select('id, word, day')
+    .select('*')
     .neq('id', correctWord.id);
 
   if (error) throw error;
@@ -67,14 +76,50 @@ export async function selectWrongAnswers(
     throw new Error(`Not enough wrong answers available. Need ${count}, got ${allWords?.length || 0}`);
   }
 
-  // Fisher-Yates shuffle 후 앞 N개 선택
-  const pool = [...allWords];
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
+  const inflectionKey = correctQuestion.inflection;
+
+  // 1단계: POS 필터
+  let pool = (allWords as Word[]).filter(w => w.pos === correctWord.pos);
+
+  // 2단계: 활용형 필터
+  if (inflectionKey && pool.length > 0) {
+    const withInflection = pool.filter(
+      w => w.inflections && w.inflections[inflectionKey]
+    );
+    if (withInflection.length >= count) {
+      pool = withInflection;
+    }
   }
 
-  return pool.slice(0, count) as Word[];
+  // 3단계: 의미 카테고리 회피
+  const diffCategory = pool.filter(
+    w => w.semantic_category !== correctWord.semantic_category
+  );
+  const sameCategory = pool.filter(
+    w => w.semantic_category === correctWord.semantic_category
+  );
+
+  let candidates: Word[];
+  if (diffCategory.length >= count) {
+    candidates = diffCategory;
+  } else {
+    const needed = count - diffCategory.length;
+    candidates = [...diffCategory, ...sameCategory.slice(0, needed)];
+  }
+
+  // 충분한 후보가 없으면 전체 풀 사용
+  if (candidates.length < count) {
+    candidates = pool;
+  }
+
+  // 랜덤 선택 후 표면형 변환
+  const shuffled = [...candidates].sort(() => Math.random() - 0.5);
+  const selected = shuffled.slice(0, count);
+
+  return selected.map(w => {
+    const surface = (inflectionKey && w.inflections?.[inflectionKey]) || w.word;
+    return matchCase(surface, correctQuestion.blank_word);
+  });
 }
 
 /**
@@ -82,12 +127,9 @@ export async function selectWrongAnswers(
  */
 export function shuffleChoices(
   correctWord: string,
-  wrongWords: Word[]
+  wrongAnswers: string[]
 ): { choices: string[]; answer: number } {
-  const choices = [
-    correctWord,
-    ...wrongWords.map(w => w.word)
-  ];
+  const choices = [correctWord, ...wrongAnswers];
 
   for (let i = choices.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -110,8 +152,8 @@ export async function generateOneQuestion(
 
   const question = blankWord(q);
 
-  const wrongWords = await selectWrongAnswers(word, selectedDays, 4);
-  const { choices, answer } = shuffleChoices(word.word, wrongWords);
+  const wrongAnswers = await selectWrongAnswers(word, q, selectedDays, 4);
+  const { choices, answer } = shuffleChoices(word.word, wrongAnswers);
 
   return {
     id: 0,

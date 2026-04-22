@@ -1,6 +1,7 @@
 export interface WordQuestion {
   original: string;
   blank_word: string;
+  inflection: string;
   start: number;
   end: number;
   suitability: string;
@@ -12,6 +13,9 @@ export interface Word {
   meaning: string | null;
   questions: WordQuestion[];
   day: string;
+  pos?: string;
+  inflections?: Record<string, string>;
+  semantic_category?: string;
 }
 
 export interface Question {
