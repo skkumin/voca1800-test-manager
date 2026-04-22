@@ -1,12 +1,15 @@
 import { supabase } from './supabase';
-import { Word, Question } from './types';
+import { Word, WordQuestion, Question } from './types';
 
 /**
  * 단어별 미출제 예문을 우선 선택한다.
  * 미출제 예문 없으면 가장 오래된 예문을 선택한다.
  */
 export async function chooseSentence(word: Word): Promise<{ word: Word; sentenceIndex: number }> {
-  // 1. sentence_usage 조회: 이 word의 각 예문 사용 횟수
+  if (word.questions.length === 0) {
+    throw new Error(`${word.word} has no testable questions`);
+  }
+
   const { data: usage, error } = await supabase
     .from('sentence_usage')
     .select('sentence_index, created_at')
@@ -15,24 +18,20 @@ export async function chooseSentence(word: Word): Promise<{ word: Word; sentence
 
   if (error) throw error;
 
-  // 2. 사용 횟수를 그룹화
   const usedIndices = new Map<number, number>();
   usage?.forEach(u => {
     usedIndices.set(u.sentence_index, (usedIndices.get(u.sentence_index) || 0) + 1);
   });
 
-  // 3. 미출제 예문 찾기
-  const unaskedIndices = word.sentences
+  const unaskedIndices = word.questions
     .map((_, idx) => idx)
     .filter(idx => !usedIndices.has(idx));
 
   let selectedIndex: number;
 
   if (unaskedIndices.length > 0) {
-    // 미출제 예문 우선 선택
     selectedIndex = unaskedIndices[Math.floor(Math.random() * unaskedIndices.length)];
   } else {
-    // 미출제 없으면 가장 오래된 예문 선택
     const sortedByUsage = Array.from(usedIndices.keys()).sort(
       (a, b) => (usedIndices.get(a) || 0) - (usedIndices.get(b) || 0)
     );
@@ -43,20 +42,14 @@ export async function chooseSentence(word: Word): Promise<{ word: Word; sentence
 }
 
 /**
- * 문장에서 단어를 _____ 로 치환한다.
- * 대소문자 무시, 단어 경계 기준 (ADR-009)
+ * 예문의 미리 계산된 좌표로 정확하게 빈칸을 뚫는다.
  */
-export function blankWord(sentence: string, word: string): string {
-  const regex = new RegExp(`\\b${escapeRegex(word)}\\b`, 'gi');
-  return sentence.replace(regex, '_____');
-}
-
-function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export function blankWord(q: WordQuestion): string {
+  return q.original.slice(0, q.start) + '_____' + q.original.slice(q.end);
 }
 
 /**
- * 다른 DAY의 단어에서 N개 오답을 선택한다 (ADR-010)
+ * 다른 DAY의 단어에서 N개 오답을 선택한다
  */
 export async function selectWrongAnswers(
   correctWord: Word,
@@ -91,7 +84,6 @@ export function shuffleChoices(
     ...wrongWords.map(w => w.word)
   ];
 
-  // Fisher-Yates shuffle
   for (let i = choices.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [choices[i], choices[j]] = [choices[j], choices[i]];
@@ -108,21 +100,16 @@ export async function generateOneQuestion(
   word: Word,
   selectedDays: string[]
 ): Promise<Question & { sentenceIndex: number }> {
-  // 1. 예문 선택
   const { sentenceIndex } = await chooseSentence(word);
-  const sentence = word.sentences[sentenceIndex];
+  const q = word.questions[sentenceIndex];
 
-  // 2. Blank 처리
-  const question = blankWord(sentence, word.word);
+  const question = blankWord(q);
 
-  // 3. 오답 선택
   const wrongWords = await selectWrongAnswers(word, selectedDays, 4);
-
-  // 4. 보기 섞기
   const { choices, answer } = shuffleChoices(word.word, wrongWords);
 
   return {
-    id: 0, // ID는 나중에 부여
+    id: 0,
     word: word.word,
     question,
     choices,
@@ -139,43 +126,44 @@ export async function generateQuestions(
   days: string[],
   count: number
 ): Promise<{ questions: Question[]; testId: string }> {
-  // 1. 대상 단어 조회
   let targetWords: Word[];
+
   if (mode === 'day_select') {
     const { data, error } = await supabase
       .from('words')
       .select('*')
-      .in('day', days);
+      .in('day', days)
+      .neq('questions', '[]');
     if (error) throw error;
     targetWords = data as Word[];
   } else {
-    // mode === 'unasked': 전체 단어 중 미출제 예문이 있는 단어 우선
     const { data, error } = await supabase
       .from('words')
-      .select('*');
+      .select('*')
+      .neq('questions', '[]');
     if (error) throw error;
     targetWords = data as Word[];
   }
 
-  if (targetWords.length < count) {
-    throw new Error(`Not enough words. Need ${count}, got ${targetWords.length}`);
+  // 출제 가능한 단어 수로 자동 제한
+  const effectiveCount = Math.min(count, targetWords.length);
+
+  if (effectiveCount === 0) {
+    throw new Error('출제 가능한 단어가 없습니다.');
   }
 
-  // 2. N개 단어 랜덤 선택
   const selectedWords: Word[] = [];
   const wordsCopy = [...targetWords];
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < effectiveCount; i++) {
     const idx = Math.floor(Math.random() * wordsCopy.length);
     selectedWords.push(wordsCopy[idx]);
     wordsCopy.splice(idx, 1);
   }
 
-  // 3. 각 단어별 문제 생성
   const questionsWithMeta = await Promise.all(
-    selectedWords.map((word, idx) => generateOneQuestion(word, days))
+    selectedWords.map((word) => generateOneQuestion(word, days))
   );
 
-  // 4. ID와 문제 구조 정리
   const questions: Question[] = questionsWithMeta.map((q, idx) => ({
     id: idx,
     word: q.word,
@@ -185,7 +173,6 @@ export async function generateQuestions(
     sentenceIndex: q.sentenceIndex
   }));
 
-  // 5. tests 테이블에 저장
   const testId = `T${Date.now()}`;
   const { error: insertError } = await supabase
     .from('tests')
@@ -198,7 +185,6 @@ export async function generateQuestions(
 
   if (insertError) throw insertError;
 
-  // 6. sentence_usage 기록
   const usageRecords = questionsWithMeta.map(q => ({
     word_id: selectedWords.find(w => w.word === q.word)!.id,
     sentence_index: q.sentenceIndex,

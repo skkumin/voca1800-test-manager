@@ -14,14 +14,17 @@ export async function GET(
         .select('score, answers, wrong_words, sentence_ids, created_at, test_id')
         .eq('student_id', studentId)
         .order('created_at', { ascending: true }),
-      supabase.from('words').select('word, sentences'),
+      supabase.from('words').select('word, questions'),
     ]);
 
     if (rErr) throw rErr;
     if (wErr) throw wErr;
 
     const wordSentenceMap = new Map(
-      (words || []).map(w => [w.word, w.sentences as string[]])
+      (words || []).map(w => [
+        w.word,
+        (w.questions as { original: string }[]).map(q => q.original),
+      ])
     );
 
     const scoreHistory = (results || []).map(r => ({

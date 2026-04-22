@@ -1,8 +1,16 @@
+export interface WordQuestion {
+  original: string;
+  blank_word: string;
+  start: number;
+  end: number;
+  suitability: string;
+}
+
 export interface Word {
   id: string;
   word: string;
-  meaning: string;
-  sentences: string[];
+  meaning: string | null;
+  questions: WordQuestion[];
   day: string;
 }
 
