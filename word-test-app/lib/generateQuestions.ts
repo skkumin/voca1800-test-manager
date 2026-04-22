@@ -162,7 +162,10 @@ export async function generateOneQuestion(
   const question = blankWord(q);
 
   const wrongAnswers = await selectWrongAnswers(word, q, selectedDays, 4);
-  const { choices, answer } = shuffleChoices(word.word, wrongAnswers);
+
+  const inflectionKey = q.inflection;
+  const correctSurface = (inflectionKey && word.inflections?.[inflectionKey]) || word.word;
+  const { choices, answer } = shuffleChoices(correctSurface, wrongAnswers);
 
   return {
     id: 0,
