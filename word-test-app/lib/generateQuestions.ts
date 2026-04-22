@@ -49,27 +49,32 @@ export function blankWord(q: WordQuestion): string {
 }
 
 /**
- * 다른 DAY의 단어에서 N개 오답을 선택한다
+ * 전체 단어 중 정답 단어를 제외하고 랜덤으로 N개 오답을 선택한다
  */
 export async function selectWrongAnswers(
   correctWord: Word,
-  selectedDays: string[],
+  _selectedDays: string[],
   count: number = 4
 ): Promise<Word[]> {
-  const { data: wrongWords, error } = await supabase
+  const { data: allWords, error } = await supabase
     .from('words')
-    .select('*')
-    .not('day', 'in', `(${selectedDays.map(d => `'${d}'`).join(',')})`)
-    .neq('id', correctWord.id)
-    .limit(count);
+    .select('id, word, day')
+    .neq('id', correctWord.id);
 
   if (error) throw error;
 
-  if (!wrongWords || wrongWords.length < count) {
-    throw new Error(`Not enough wrong answers available. Need ${count}, got ${wrongWords?.length || 0}`);
+  if (!allWords || allWords.length < count) {
+    throw new Error(`Not enough wrong answers available. Need ${count}, got ${allWords?.length || 0}`);
   }
 
-  return wrongWords.slice(0, count) as Word[];
+  // Fisher-Yates shuffle 후 앞 N개 선택
+  const pool = [...allWords];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  return pool.slice(0, count) as Word[];
 }
 
 /**
